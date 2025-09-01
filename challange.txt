@@ -1,0 +1,40 @@
+Develop a NodeJS application that scrape data from two websites (Website A and Website B)
+using Puppeteer.
+Requirements:
+● Create a base class named WebsiteCrawler with the following methods:
+○ openBrowser(): This method opens a headless Chrome browser using
+Puppeteer.
+○ goToPage(url): This method navigates the browser to the given URL.
+○ closeBrowser(): This method closes the browser instance.
+● Create two child classes named WebsiteAScraper and WebsiteBScraper that extend the
+WebsiteCrawler class.
+● Implement specific methods in each child class to extract the following details from their
+respective websites:
+○ WebsiteAScraper:
+■ Title of the current page
+■ List of product names on the page
+■ Price of each product
+○ WebsiteBScraper:
+■ Author of the latest blog post
+■ Title of the latest blog post
+■ Number of comments on the post
+
+● Use CSS selectors to locate and extract the desired data from each website.
+● Ensure proper error handling and logging throughout the program.
+● Finally, write a script that creates instances of both scrapers, calls their methods to fetch
+data, and stores the extracted information in a structured format (e.g., JSON, CSV).
+Bonus points:
+● Implement pagination support to scrape multiple pages on each website.
+● Add functionality to search a website from the home page.
+● Integrate error handling mechanisms to retry fetching data on failures.
+● Write unit tests for your scraper classes.
+Tips:
+● You can use freely available websites for this challenge, like product listing pages or blog
+websites.
+● Choose websites with different structures and data formats to showcase adaptability.
+● Focus on clean code, proper class design, and efficient data extraction strategies.
+● Provide a clear readme file explaining the code structure and functionality.
+Provide the project within a zip file via email (you can send back a link to a Google Drive share
+that contains the zip file for download).
+Any use of LLMs (e.g. ChatGPT) to solve the challenge is not allowed, and if detected,
+would disqualify the challenge.

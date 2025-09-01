@@ -1,0 +1,17 @@
+{
+  "name": "webscraper",
+  "version": "1.0.0",
+  "description": "searches sites for data and reads that data then storing it",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^24.17.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
