@@ -13,5 +13,8 @@
     "puppeteer": "^24.17.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
   }
 }
