@@ -70,6 +70,7 @@ class WebsiteAScraper extends WebsiteCrawler {
     }
 
     async getAllProductCards() {
+        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
         let previousCount = 0;
         let cards = [];
             while (true) {
@@ -123,7 +124,7 @@ class WebsiteAScraper extends WebsiteCrawler {
             if (!priceEl) return { price: null, unitPrice: null };
 
             const priceText = priceEl.innerText.trim();
-            const [price, unitPrice] = priceText.split('/').map(p => p?.trim());
+            const [price, unitPrice] = priceText.split('\neach\n').map(p => p?.trim());
             return { price, unitPrice };
         }, card);
     }

@@ -19,7 +19,7 @@ class WebsiteCrawler {
                     "--disable-setuid-sandbox",
                     "--disable-blink-features=AutomationControlled",
                     "--disable-infobars",
-                    "--window-size=1280,800",
+                    "--window-size=1280,1200",
                 ],
                 ...options,
             });
@@ -44,7 +44,7 @@ class WebsiteCrawler {
             );
 
             
-            await this.page.setViewport({ width: 1280, height: 800 });
+            await this.page.setViewport({ width: 1280, height: 1200 });
 
             
             await this.page.setExtraHTTPHeaders({
@@ -65,27 +65,33 @@ class WebsiteCrawler {
         await new Promise(resolve => setTimeout(resolve, waitTime));
     }
 
-    async goToPage(url, maxRetries = 2) {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
+    async goToPage(url, maxRetries = 2, waitForSelector = null, waitOptions = { timeout: 10000 }) {
+        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.");
 
         let attempt = 0;
         while (attempt < maxRetries) {
             try {
-                await this.page.goto(url, { waitUntil: "networkidle2", timeout: 15000 })
-                console.log(`Navigated to ${url}`)
-                await this.addWaitTime()
-                return
-            } catch (error) {
-                attempt++;
-                console.error(`Failed to navigate to ${url} (attempt ${attempt}):`, error.message)
+                await this.page.goto(url, waitOptions);
+                console.log(`Navigated to ${url}`);
 
-                if (attempt >= maxRetries) {
-                    throw new Error(`Navigation to ${url} failed after ${maxRetries} attempts.`)
+                // Optional element wait for selector I added this because of the news site
+                if (waitForSelector) {
+                    await this.page.waitForSelector(waitForSelector, waitOptions);
                 }
 
-                const backoffTime = 1000 * Math.pow(2, attempt)
-                console.log(`Retrying in ${backoffTime / 1000}s...`)
-                await new Promise(resolve => setTimeout(resolve, backoffTime))
+                await this.addWaitTime();
+                return;
+            } catch (error) {
+                attempt++;
+                console.error(`Failed to navigate to ${url} (attempt ${attempt}):`, error.message);
+
+                if (attempt >= maxRetries) {
+                    throw new Error(`Navigation to ${url} failed after ${maxRetries} attempts.`);
+                }
+
+                const backoffTime = 1000 * Math.pow(2, attempt);
+                console.log(`Retrying in ${backoffTime / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, backoffTime));
             }
         }
     }
@@ -100,22 +106,6 @@ class WebsiteCrawler {
         } catch (e) {
             console.error("Error closing browser:", e.message)
         }
-    }
-
-    async getText(selector) {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        return await this.page.$eval(selector, el => el.textContent.trim())
-    }
-
-    async getAttribute(selector, attribute) {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.");
-        return await this.page.$eval(selector, (el, attr) => el.getAttribute(attr), attribute)
-    }
-
-    async click(selector) {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        await this.page.waitForSelector(selector, { visible: true })
-        await this.page.click(selector);
     }
 }
 
