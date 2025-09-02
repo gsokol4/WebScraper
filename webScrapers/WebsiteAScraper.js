@@ -102,14 +102,12 @@ class WebsiteAScraper extends WebsiteCrawler {
         return cards;
     }
 
-    // Get the product link from the card
     async getCardLink(card) {
         return await this.page.evaluate(card => {
             return card.querySelector('a')?.href || null;
         }, card);
     }
 
-    // Get the product title
     async getCardTitle(card) {
         return await this.page.evaluate(card => {
             const titleEl = card.querySelector('[data-qe-id="productTitle"]');
@@ -117,7 +115,6 @@ class WebsiteAScraper extends WebsiteCrawler {
         }, card);
     }
 
-    // Get the product price and unit price
     async getCardPrice(card) {
         return await this.page.evaluate(card => {
             const priceEl = card.querySelector('[data-qe-id="productPrice"]');
