@@ -11,7 +11,6 @@ Check your version:
 
 node -v
 
-
 Install dependencies before running:
 
 npm install
@@ -22,25 +21,21 @@ By default, running the index file will execute all available jobs:
 
 node index.js
 
-
 You may also run jobs individually:
 
 HEB (Website A)
 
 node index.js heb
 
-
 Optionally, provide a list of products:
 
 node index.js heb "fettuccine pasta, carrots"
-
 
 This will return up to 60 product listings per search term, making it possible to calculate costs for meals or compare prices.
 
 Live Science (Website B)
 
 node index.js news
-
 
 This fetches details of the latest article from Live Science
 .

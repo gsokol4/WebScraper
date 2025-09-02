@@ -12,131 +12,135 @@ import WebsiteCrawler from "../websiteCrawler.js";
 */
 
 class WebsiteAScraper extends WebsiteCrawler {
-    async getSearchBar() {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.");
+  async getSearchBar() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
 
-        const searchBar = await this.page.$('[data-qe-id="searchBar"]')
-        await this.addWaitTime()
-        if (!searchBar) {
-            throw new Error("Search bar not found on the page.")
-        }
-        
-        return searchBar;
+    const searchBar = await this.page.$('[data-qe-id="searchBar"]');
+    await this.addWaitTime();
+    if (!searchBar) {
+      throw new Error("Search bar not found on the page.");
     }
 
+    return searchBar;
+  }
 
-    async clearSearch() {
-        const searchBar = await this.getSearchBar();
-        await searchBar.click({ clickCount: 3 }); 
-        await this.addWaitTime()
-        await this.page.keyboard.press('Backspace');
-        await this.addWaitTime()
+  async clearSearch() {
+    const searchBar = await this.getSearchBar();
+    await searchBar.click({ clickCount: 3 });
+    await this.addWaitTime();
+    await this.page.keyboard.press("Backspace");
+    await this.addWaitTime();
+  }
+
+  async typeInSearch(productToSearch) {
+    const searchBar = await this.getSearchBar();
+    await searchBar.type(productToSearch, {
+      delay: this.addWaitTime(300, 400),
+    });
+    await this.addWaitTime();
+  }
+
+  async submitSearch() {
+    const searchButton = await this.page.$('[data-qe-id="submitSearch"]');
+    if (!searchButton) throw new Error("Search button not found on the page.");
+    await this.addWaitTime();
+    await searchButton.click();
+    await this.addWaitTime();
+  }
+
+  async search(query) {
+    await this.clearSearch();
+    await this.typeInSearch(query);
+    await this.submitSearch();
+    // this waits for the page to load
+    await this.page.waitForFunction(
+      (query) => {
+        const header = document.getElementById("searchGridHeader");
+        return header && header.innerText.includes(query);
+      },
+      { timeout: 10000 },
+      query,
+    );
+  }
+
+  async getPageTitle() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
+    const title = await this.page.title();
+    if (!title) throw new Error("Page Title not found on the page.");
+    return await this.page.title();
+  }
+
+  async getAllProductCards() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
+    let previousCount = 0;
+    let cards = [];
+    while (true) {
+      // Scroll to the bottom of the page
+      await this.page.evaluate(() => {
+        window.scrollBy(0, window.innerHeight);
+      });
+
+      // Wait for new items to load (network + render time)
+      try {
+        await this.page.waitForNetworkIdle({ idleTime: 500, timeout: 5000 });
+      } catch {
+        // If network idle times out, continue anyway
+      }
+      await this.addWaitTime(2000, 3500); // small buffer
+
+      // Count how many cards we have now
+      cards = await this.page.$$('[data-component="product-card"]');
+      const currentCount = cards.length;
+
+      if (currentCount === previousCount) {
+        // No new cards appeared — we've reached the end
+        break;
+      }
+
+      previousCount = currentCount;
     }
 
-    async typeInSearch(productToSearch){
-        const searchBar = await this.getSearchBar()
-        await searchBar.type(productToSearch, {delay: this.addWaitTime(300,400)})
-        await this.addWaitTime()
-    }
+    return cards;
+  }
 
-    async submitSearch() {
-        const searchButton = await this.page.$('[data-qe-id="submitSearch"]')
-        if (!searchButton) throw new Error("Search button not found on the page.")
-        await this.addWaitTime()
-        await searchButton.click();
-        await this.addWaitTime()
-    }
+  async getCardLink(card) {
+    return await this.page.evaluate((card) => {
+      return card.querySelector("a")?.href || null;
+    }, card);
+  }
 
-    async search(query) {
-        await this.clearSearch()
-        await this.typeInSearch(query);
-        await this.submitSearch()
-        // this waits for the page to load
-        await this.page.waitForFunction(
-            (query) => {
-                const header = document.getElementById('searchGridHeader');
-                return header && header.innerText.includes(query);
-            },
-            { timeout: 10000 },
-            query
-        );
-    }
+  async getCardTitle(card) {
+    return await this.page.evaluate((card) => {
+      const titleEl = card.querySelector('[data-qe-id="productTitle"]');
+      return titleEl?.innerText.trim() || null;
+    }, card);
+  }
 
-    async getPageTitle(){
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        const title = await this.page.title();
-        if(!title) throw new Error("Page Title not found on the page.")
-        return await this.page.title();
-    }
+  async getCardPrice(card) {
+    return await this.page.evaluate((card) => {
+      const priceEl = card.querySelector('[data-qe-id="productPrice"]');
+      if (!priceEl) return { price: null, unitPrice: null };
 
-    async getAllProductCards() {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        let previousCount = 0;
-        let cards = [];
-            while (true) {
-                // Scroll to the bottom of the page
-                await this.page.evaluate(() => {
-                    window.scrollBy(0, window.innerHeight);
-                });
+      const priceText = priceEl.innerText.trim();
+      const [price, unitPrice] = priceText
+        .split("\neach\n")
+        .map((p) => p?.trim());
+      return { price, unitPrice };
+    }, card);
+  }
 
-                // Wait for new items to load (network + render time)
-                try {
-                    await this.page.waitForNetworkIdle({ idleTime: 500, timeout: 5000 });
-                } catch {
-                    // If network idle times out, continue anyway
-                }
-                await this.addWaitTime(2000,3500); // small buffer
+  async getCardDetails(card) {
+    const [link, title, { price, unitPrice }] = await Promise.all([
+      this.getCardLink(card),
+      this.getCardTitle(card),
+      this.getCardPrice(card),
+    ]);
 
-                // Count how many cards we have now
-                cards = await this.page.$$('[data-component="product-card"]');
-                const currentCount = cards.length;
-
-                if (currentCount === previousCount) {
-                    // No new cards appeared — we've reached the end
-                    break;
-                }
-
-                previousCount = currentCount;
-            }
-
-        return cards;
-    }
-
-    async getCardLink(card) {
-        return await this.page.evaluate(card => {
-            return card.querySelector('a')?.href || null;
-        }, card);
-    }
-
-    async getCardTitle(card) {
-        return await this.page.evaluate(card => {
-            const titleEl = card.querySelector('[data-qe-id="productTitle"]');
-            return titleEl?.innerText.trim() || null;
-        }, card);
-    }
-
-    async getCardPrice(card) {
-        return await this.page.evaluate(card => {
-            const priceEl = card.querySelector('[data-qe-id="productPrice"]');
-            if (!priceEl) return { price: null, unitPrice: null };
-
-            const priceText = priceEl.innerText.trim();
-            const [price, unitPrice] = priceText.split('\neach\n').map(p => p?.trim());
-            return { price, unitPrice };
-        }, card);
-    }
-
-    async getCardDetails(card) {
-        const [link, title, { price, unitPrice }] = await Promise.all([
-            this.getCardLink(card),
-            this.getCardTitle(card),
-            this.getCardPrice(card)
-        ]);
-
-        return { link, title, price, unitPrice };
-    }
-
-    
+    return { link, title, price, unitPrice };
+  }
 }
 
-export default WebsiteAScraper
+export default WebsiteAScraper;

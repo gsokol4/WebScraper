@@ -12,72 +12,77 @@ import WebsiteCrawler from "../websiteCrawler.js";
 */
 
 class WebsiteBScraper extends WebsiteCrawler {
-    async getFirstArticle(){
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        const article = await this.page.$('.article-link')
-        if (!article) throw new Error("No article found");
-        return article
-    }
+  async getFirstArticle() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
+    const article = await this.page.$(".article-link");
+    if (!article) throw new Error("No article found");
+    return article;
+  }
 
-    async clickFirstArticle(){
-        const article = await this.getFirstArticle()
-        
-        await Promise.all([
-            this.page.waitForNavigation({ waitUntil: 'networkidle2' }),
-            article.click()
-        ])
-        await this.addWaitTime(1000,2000)
-    }
+  async clickFirstArticle() {
+    const article = await this.getFirstArticle();
 
-    async getUrl () {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        const url = this.page.url();
-        return url
-    }
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "networkidle2" }),
+      article.click(),
+    ]);
+    await this.addWaitTime(1000, 2000);
+  }
 
-    async scrapeBySelector(selector) {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.")
-        const text = await this.page.evaluate((selector)=>{
-            const item = document.querySelector(selector)
-            console.log(selector)
-            return item ? item.innerText : null;
-        }, selector)
-        return text
-    }
-    /*
+  async getUrl() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
+    const url = this.page.url();
+    return url;
+  }
+
+  async scrapeBySelector(selector) {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
+    const text = await this.page.evaluate((selector) => {
+      const item = document.querySelector(selector);
+      console.log(selector);
+      return item ? item.innerText : null;
+    }, selector);
+    return text;
+  }
+  /*
 
     */
-    async scrapeNumOfComments() {
-        if (!this.page) throw new Error("Page not initialized. Call openNewPage first.");
+  async scrapeNumOfComments() {
+    if (!this.page)
+      throw new Error("Page not initialized. Call openNewPage first.");
 
-        
-        const count = await this.page.evaluate(() => {
-            // only really used here but maybe we could throw this in a helper class or function
-            const extractNumber = (el) => {
-            if (!el) return null;
-            const match = el.innerText.match(/\d+/); 
-            return match ? match[0] : null;
-            };
-            /* 
+    const count = await this.page.evaluate(() => {
+      // only really used here but maybe we could throw this in a helper class or function
+      const extractNumber = (el) => {
+        if (!el) return null;
+        const match = el.innerText.match(/\d+/);
+        return match ? match[0] : null;
+      };
+      /* 
                 with the current state of the UI it seems to have two elements which flip depending on the state.
                 when there are comments the number of comments will display '[x-show="showCount"]'
                 when there are no comments as separate element will display  [x-show="!showCount"] defaulting to zero
                 I wanted to check both of these rather than defaulting to zero when '[x-show="showCount"]' is not there
                 since there is the possibility that they update this logic and I want to error handle for that
             */
-            const elShown = document.querySelector('[x-show="showCount"]');
-            const numberShown = extractNumber(elShown);
-            if (numberShown !== null) return numberShown;
+      const elShown = document.querySelector('[x-show="showCount"]');
+      const numberShown = extractNumber(elShown);
+      if (numberShown !== null) return numberShown;
 
-            const elHidden = document.querySelector('[x-show="!showCount"]');
-            const numberHidden = extractNumber(elHidden);
-            if (numberHidden !== null) return numberHidden;
+      const elHidden = document.querySelector('[x-show="!showCount"]');
+      const numberHidden = extractNumber(elHidden);
+      if (numberHidden !== null) return numberHidden;
 
-            throw new Error("No numeric comment count found. Selector may have changed or element has no number.");
-        });
+      throw new Error(
+        "No numeric comment count found. Selector may have changed or element has no number.",
+      );
+    });
 
-        return count;
-    }
+    return count;
+  }
 }
 
-export default WebsiteBScraper
+export default WebsiteBScraper;
